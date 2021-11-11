@@ -21,8 +21,8 @@ public class Department {
 
     @JsonCreator
     public Department(@JsonProperty("id") final BigInteger id,
-                    @JsonProperty("fullName") final String name,
-                    @JsonProperty("position") final String location) {
+                      @JsonProperty("fullName") final String name,
+                      @JsonProperty("position") final String location) {
         this.id = id;
         this.name = name;
         this.location = location;
@@ -42,8 +42,12 @@ public class Department {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final Department that = (Department) o;
         return Objects.equal(id, that.id) &&
                 Objects.equal(name, that.name) &&
@@ -74,7 +78,9 @@ public class Department {
             mapper.configure(DeserializationFeature.FAIL_ON_MISSING_CREATOR_PROPERTIES, false);
         }
 
-        public static String toJson(Department department){
+        private Parser(){}
+
+        public static String toJson(Department department) {
             try {
                 final StringWriter writer = new StringWriter();
                 mapper.writeValue(writer, department);
@@ -84,7 +90,7 @@ public class Department {
             }
         }
 
-        public static Department parseJson(String json){
+        public static Department parseJson(String json) {
             try {
                 return mapper.readValue(json, Department.class);
             } catch (IOException exc) {

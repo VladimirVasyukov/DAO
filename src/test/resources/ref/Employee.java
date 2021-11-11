@@ -72,8 +72,12 @@ public class Employee {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final Employee employee = (Employee) o;
         return Objects.equal(id, employee.id) &&
                 Objects.equal(fullName, employee.fullName) &&
@@ -110,6 +114,8 @@ public class Employee {
             mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
             mapper.configure(DeserializationFeature.FAIL_ON_MISSING_CREATOR_PROPERTIES, false);
         }
+
+        private Parser(){}
 
         public static String toJson(Employee employee){
             try {
