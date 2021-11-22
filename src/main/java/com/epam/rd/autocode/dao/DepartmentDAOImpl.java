@@ -31,12 +31,9 @@ public class DepartmentDAOImpl implements DepartmentDao {
     @Override
     public Optional<Department> getById(BigInteger id) {
         Optional<Department> dep = Optional.empty();
-        Connection connection = null;
-        PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
-        try {
-            connection = ConnectionSource.instance().createConnection();
-            preparedStatement = connection.prepareStatement(GET_DEPARTMENT_BY_ID);
+        try (Connection connection = ConnectionSource.instance().createConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(GET_DEPARTMENT_BY_ID)) {
             preparedStatement.setString(PARAMETER_ONE, String.valueOf(id));
             resultSet = preparedStatement.executeQuery();
 
@@ -49,18 +46,12 @@ public class DepartmentDAOImpl implements DepartmentDao {
         } catch (SQLException e) {
             LOGGER.error(e);
         } finally {
-            try {
-                if (connection != null) {
-                    connection.close();
-                }
-                if (preparedStatement != null) {
-                    preparedStatement.close();
-                }
-                if (resultSet != null) {
+            if (resultSet != null) {
+                try {
                     resultSet.close();
+                } catch (SQLException e) {
+                    LOGGER.error(e);
                 }
-            } catch (SQLException e) {
-                LOGGER.error(e);
             }
         }
         return dep;
@@ -69,13 +60,9 @@ public class DepartmentDAOImpl implements DepartmentDao {
     @Override
     public List<Department> getAll() {
         List<Department> departmentList = new ArrayList<>();
-        Connection connection = null;
-        Statement statement = null;
-        ResultSet resultSet = null;
-        try {
-            connection = ConnectionSource.instance().createConnection();
-            statement = connection.createStatement();
-            resultSet = statement.executeQuery(GET_ALL_DEPARTMENTS);
+        try (Connection connection = ConnectionSource.instance().createConnection();
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(GET_ALL_DEPARTMENTS)) {
 
             while (resultSet.next()) {
                 departmentList.add(new Department(
@@ -85,20 +72,6 @@ public class DepartmentDAOImpl implements DepartmentDao {
             }
         } catch (SQLException e) {
             LOGGER.error(e);
-        } finally {
-            try {
-                if (connection != null) {
-                    connection.close();
-                }
-                if (statement != null) {
-                    statement.close();
-                }
-                if (resultSet != null) {
-                    resultSet.close();
-                }
-            } catch (SQLException e) {
-                LOGGER.error(e);
-            }
         }
         return departmentList;
     }
@@ -113,54 +86,26 @@ public class DepartmentDAOImpl implements DepartmentDao {
 
         final String name = department.getName();
         final String location = department.getLocation();
-        Connection connection = null;
-        PreparedStatement preparedStatement = null;
-        try {
-            connection = ConnectionSource.instance().createConnection();
-            preparedStatement = connection.prepareStatement(SAVE);
+        try (Connection connection = ConnectionSource.instance().createConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(SAVE)) {
             preparedStatement.setInt(PARAMETER_ONE, Integer.parseInt(String.valueOf(id)));
             preparedStatement.setString(PARAMETER_TWO, name);
             preparedStatement.setString(PARAMETER_THREE, location);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             LOGGER.error(e);
-        } finally {
-            try {
-                if (connection != null) {
-                    connection.close();
-                }
-                if (preparedStatement != null) {
-                    preparedStatement.close();
-                }
-            } catch (SQLException e) {
-                LOGGER.error(e);
-            }
         }
         return department;
     }
 
     @Override
     public void delete(Department department) {
-        Connection connection = null;
-        PreparedStatement preparedStatement = null;
-        try {
-            connection = ConnectionSource.instance().createConnection();
-            preparedStatement = connection.prepareStatement(DELETE);
+        try (Connection connection = ConnectionSource.instance().createConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(DELETE)) {
             preparedStatement.setString(PARAMETER_ONE, String.valueOf(department.getId()));
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             LOGGER.error(e);
-        } finally {
-            try {
-                if (connection != null) {
-                    connection.close();
-                }
-                if (preparedStatement != null) {
-                    preparedStatement.close();
-                }
-            } catch (SQLException e) {
-                LOGGER.error(e);
-            }
         }
     }
 }

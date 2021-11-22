@@ -18,6 +18,7 @@ import java.sql.Statement;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public class EmployeeDAOImpl implements EmployeeDao {
@@ -56,12 +57,9 @@ public class EmployeeDAOImpl implements EmployeeDao {
     @Override
     public List<Employee> getByDepartment(Department department) {
         List<Employee> employeeList = new ArrayList<>();
-        Connection connection = null;
-        PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
-        try {
-            connection = ConnectionSource.instance().createConnection();
-            preparedStatement = connection.prepareStatement(GET_BY_DEPARTMENT);
+        try (Connection connection = ConnectionSource.instance().createConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(GET_BY_DEPARTMENT)) {
             preparedStatement.setString(PARAMETER_ONE, String.valueOf(department.getId()));
             resultSet = preparedStatement.executeQuery();
 
@@ -72,12 +70,6 @@ public class EmployeeDAOImpl implements EmployeeDao {
             LOGGER.error(e);
         } finally {
             try {
-                if (connection != null) {
-                    connection.close();
-                }
-                if (preparedStatement != null) {
-                    preparedStatement.close();
-                }
                 if (resultSet != null) {
                     resultSet.close();
                 }
@@ -91,12 +83,9 @@ public class EmployeeDAOImpl implements EmployeeDao {
     @Override
     public List<Employee> getByManager(Employee employee) {
         List<Employee> employeeList = new ArrayList<>();
-        Connection connection = null;
-        PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
-        try {
-            connection = ConnectionSource.instance().createConnection();
-            preparedStatement = connection.prepareStatement(GET_BY_MANAGER);
+        try (Connection connection = ConnectionSource.instance().createConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(GET_BY_MANAGER)) {
             preparedStatement.setString(PARAMETER_ONE, String.valueOf(employee.getId()));
             resultSet = preparedStatement.executeQuery();
 
@@ -107,15 +96,7 @@ public class EmployeeDAOImpl implements EmployeeDao {
             LOGGER.error(e);
         } finally {
             try {
-                if (connection != null) {
-                    connection.close();
-                }
-                if (preparedStatement != null) {
-                    preparedStatement.close();
-                }
-                if (resultSet != null) {
-                    resultSet.close();
-                }
+                Objects.requireNonNull(resultSet).close();
             } catch (SQLException e) {
                 LOGGER.error(e);
             }
@@ -139,18 +120,15 @@ public class EmployeeDAOImpl implements EmployeeDao {
 
     @Override
     public Optional<Employee> getById(BigInteger id) {
-        Optional<Employee> empployee = Optional.empty();
-        Connection connection = null;
-        PreparedStatement preparedStatement = null;
+        Optional<Employee> employee = Optional.empty();
         ResultSet resultSet = null;
-        try {
-            connection = ConnectionSource.instance().createConnection();
-            preparedStatement = connection.prepareStatement(GET_BY_ID);
+        try (Connection connection = ConnectionSource.instance().createConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(GET_BY_ID)) {
             preparedStatement.setString(PARAMETER_ONE, String.valueOf(id));
             resultSet = preparedStatement.executeQuery();
 
             while (resultSet.next()) {
-                empployee = Optional.of(new Employee(
+                employee = Optional.of(new Employee(
                     new BigInteger(String.valueOf(resultSet.getLong(COLUMN_ID))),
                     new FullName(
                         resultSet.getString(COLUMN_FIRST_NAME),
@@ -166,12 +144,6 @@ public class EmployeeDAOImpl implements EmployeeDao {
             LOGGER.error(e);
         } finally {
             try {
-                if (connection != null) {
-                    connection.close();
-                }
-                if (preparedStatement != null) {
-                    preparedStatement.close();
-                }
                 if (resultSet != null) {
                     resultSet.close();
                 }
@@ -179,38 +151,20 @@ public class EmployeeDAOImpl implements EmployeeDao {
                 LOGGER.error(e);
             }
         }
-        return empployee;
+        return employee;
     }
 
     @Override
     public List<Employee> getAll() {
         List<Employee> employeeList = new ArrayList<>();
-        Connection connection = null;
-        Statement statement = null;
-        ResultSet resultSet = null;
-        try {
-            connection = ConnectionSource.instance().createConnection();
-            statement = connection.createStatement();
-            resultSet = statement.executeQuery(GET_ALL);
+        try (Connection connection = ConnectionSource.instance().createConnection();
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(GET_ALL)) {
             while (resultSet.next()) {
                 getDataFromResultSet(employeeList, resultSet);
             }
         } catch (SQLException e) {
             LOGGER.error(e);
-        } finally {
-            try {
-                if (connection != null) {
-                    connection.close();
-                }
-                if (statement != null) {
-                    statement.close();
-                }
-                if (resultSet != null) {
-                    resultSet.close();
-                }
-            } catch (SQLException e) {
-                LOGGER.error(e);
-            }
         }
         return employeeList;
     }
@@ -230,11 +184,8 @@ public class EmployeeDAOImpl implements EmployeeDao {
         final BigDecimal salary = employee.getSalary();
         final BigInteger managerId = employee.getManagerId();
         final BigInteger departmentId = employee.getDepartmentId();
-        Connection connection = null;
-        PreparedStatement preparedStatement = null;
-        try {
-            connection = ConnectionSource.instance().createConnection();
-            preparedStatement = connection.prepareStatement(SAVE);
+        try (Connection connection = ConnectionSource.instance().createConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(SAVE)) {
             preparedStatement.setInt(PARAMETER_ONE, Integer.parseInt(String.valueOf(id)));
             preparedStatement.setString(PARAMETER_TWO, fullName.getFirstName());
             preparedStatement.setString(PARAMETER_THREE, fullName.getLastName());
@@ -247,17 +198,6 @@ public class EmployeeDAOImpl implements EmployeeDao {
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             LOGGER.error(e);
-        } finally {
-            try {
-                if (connection != null) {
-                    connection.close();
-                }
-                if (preparedStatement != null) {
-                    preparedStatement.close();
-                }
-            } catch (SQLException e) {
-                LOGGER.error(e);
-            }
         }
         return employee;
     }
@@ -265,26 +205,12 @@ public class EmployeeDAOImpl implements EmployeeDao {
 
     @Override
     public void delete(Employee employee) {
-        Connection connection = null;
-        PreparedStatement preparedStatement = null;
-        try {
-            connection = ConnectionSource.instance().createConnection();
-            preparedStatement = connection.prepareStatement(DELETE);
+        try (Connection connection = ConnectionSource.instance().createConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(DELETE)) {
             preparedStatement.setString(PARAMETER_ONE, String.valueOf(employee.getId()));
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             LOGGER.error(e);
-        } finally {
-            try {
-                if (connection != null) {
-                    connection.close();
-                }
-                if (preparedStatement != null) {
-                    preparedStatement.close();
-                }
-            } catch (SQLException e) {
-                LOGGER.error(e);
-            }
         }
     }
 }
