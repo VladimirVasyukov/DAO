@@ -2,10 +2,10 @@ package com.epam.rd.autocode.dao;
 
 public class DaoFactory {
     public EmployeeDao employeeDAO() {
-        throw new UnsupportedOperationException();
+        return new EmployeeDAOImpl();
     }
 
     public DepartmentDao departmentDAO() {
-        throw new UnsupportedOperationException();
+        return new DepartmentDAOImpl();
     }
 }
