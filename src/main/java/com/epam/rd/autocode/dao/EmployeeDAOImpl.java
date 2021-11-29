@@ -18,11 +18,10 @@ import java.sql.Statement;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 public class EmployeeDAOImpl implements EmployeeDao {
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger log = LogManager.getLogger();
     private static final byte PARAMETER_ONE = 1;
     private static final byte PARAMETER_TWO = 2;
     private static final byte PARAMETER_THREE = 3;
@@ -57,25 +56,17 @@ public class EmployeeDAOImpl implements EmployeeDao {
     @Override
     public List<Employee> getByDepartment(Department department) {
         List<Employee> employeeList = new ArrayList<>();
-        ResultSet resultSet = null;
         try (Connection connection = ConnectionSource.instance().createConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(GET_BY_DEPARTMENT)) {
             preparedStatement.setString(PARAMETER_ONE, String.valueOf(department.getId()));
-            resultSet = preparedStatement.executeQuery();
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
 
-            while (resultSet.next()) {
-                getDataFromResultSet(employeeList, resultSet);
+                while (resultSet.next()) {
+                    getDataFromResultSet(employeeList, resultSet);
+                }
             }
         } catch (SQLException e) {
-            LOGGER.error(e);
-        } finally {
-            try {
-                if (resultSet != null) {
-                    resultSet.close();
-                }
-            } catch (SQLException e) {
-                LOGGER.error(e);
-            }
+            log.error(e);
         }
         return employeeList;
     }
@@ -83,23 +74,17 @@ public class EmployeeDAOImpl implements EmployeeDao {
     @Override
     public List<Employee> getByManager(Employee employee) {
         List<Employee> employeeList = new ArrayList<>();
-        ResultSet resultSet = null;
         try (Connection connection = ConnectionSource.instance().createConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(GET_BY_MANAGER)) {
             preparedStatement.setString(PARAMETER_ONE, String.valueOf(employee.getId()));
-            resultSet = preparedStatement.executeQuery();
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
 
-            while (resultSet.next()) {
-                getDataFromResultSet(employeeList, resultSet);
+                while (resultSet.next()) {
+                    getDataFromResultSet(employeeList, resultSet);
+                }
             }
         } catch (SQLException e) {
-            LOGGER.error(e);
-        } finally {
-            try {
-                Objects.requireNonNull(resultSet).close();
-            } catch (SQLException e) {
-                LOGGER.error(e);
-            }
+            log.error(e);
         }
         return employeeList;
     }
@@ -121,35 +106,27 @@ public class EmployeeDAOImpl implements EmployeeDao {
     @Override
     public Optional<Employee> getById(BigInteger id) {
         Optional<Employee> employee = Optional.empty();
-        ResultSet resultSet = null;
         try (Connection connection = ConnectionSource.instance().createConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(GET_BY_ID)) {
             preparedStatement.setString(PARAMETER_ONE, String.valueOf(id));
-            resultSet = preparedStatement.executeQuery();
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
 
-            while (resultSet.next()) {
-                employee = Optional.of(new Employee(
-                    new BigInteger(String.valueOf(resultSet.getLong(COLUMN_ID))),
-                    new FullName(
-                        resultSet.getString(COLUMN_FIRST_NAME),
-                        resultSet.getString(COLUMN_LAST_NAME),
-                        resultSet.getString(COLUMN_MIDDLE_NAME)),
-                    Position.valueOf(resultSet.getString(COLUMN_POSITION)),
-                    resultSet.getDate(COLUMN_HIREDATE).toLocalDate(),
-                    resultSet.getBigDecimal(COLUMN_SALARY),
-                    new BigInteger(String.valueOf(resultSet.getLong(COLUMN_MANAGER))),
-                    new BigInteger(String.valueOf(resultSet.getLong(COLUMN_DEPARTMENT)))));
+                if (resultSet.next()) {
+                    employee = Optional.of(new Employee(
+                        new BigInteger(String.valueOf(resultSet.getLong(COLUMN_ID))),
+                        new FullName(
+                            resultSet.getString(COLUMN_FIRST_NAME),
+                            resultSet.getString(COLUMN_LAST_NAME),
+                            resultSet.getString(COLUMN_MIDDLE_NAME)),
+                        Position.valueOf(resultSet.getString(COLUMN_POSITION)),
+                        resultSet.getDate(COLUMN_HIREDATE).toLocalDate(),
+                        resultSet.getBigDecimal(COLUMN_SALARY),
+                        new BigInteger(String.valueOf(resultSet.getLong(COLUMN_MANAGER))),
+                        new BigInteger(String.valueOf(resultSet.getLong(COLUMN_DEPARTMENT)))));
+                }
             }
         } catch (SQLException e) {
-            LOGGER.error(e);
-        } finally {
-            try {
-                if (resultSet != null) {
-                    resultSet.close();
-                }
-            } catch (SQLException e) {
-                LOGGER.error(e);
-            }
+            log.error(e);
         }
         return employee;
     }
@@ -160,11 +137,12 @@ public class EmployeeDAOImpl implements EmployeeDao {
         try (Connection connection = ConnectionSource.instance().createConnection();
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(GET_ALL)) {
+
             while (resultSet.next()) {
                 getDataFromResultSet(employeeList, resultSet);
             }
         } catch (SQLException e) {
-            LOGGER.error(e);
+            log.error(e);
         }
         return employeeList;
     }
@@ -173,7 +151,7 @@ public class EmployeeDAOImpl implements EmployeeDao {
     @Override
     public Employee save(Employee employee) {
         BigInteger id;
-        if (!getById(employee.getId()).equals(Optional.empty())) {
+        if (getById(employee.getId()).isPresent()) {
             delete(employee);
         }
         id = employee.getId();
@@ -197,7 +175,7 @@ public class EmployeeDAOImpl implements EmployeeDao {
             preparedStatement.setInt(PARAMETER_NINE, Integer.parseInt(String.valueOf(departmentId)));
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
-            LOGGER.error(e);
+            log.error(e);
         }
         return employee;
     }
@@ -210,7 +188,7 @@ public class EmployeeDAOImpl implements EmployeeDao {
             preparedStatement.setString(PARAMETER_ONE, String.valueOf(employee.getId()));
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
-            LOGGER.error(e);
+            log.error(e);
         }
     }
 }

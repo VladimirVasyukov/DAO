@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 public class DepartmentDAOImpl implements DepartmentDao {
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger log = LogManager.getLogger();
     private static final byte PARAMETER_ONE = 1;
     private static final byte PARAMETER_TWO = 2;
     private static final byte PARAMETER_THREE = 3;
@@ -31,28 +31,20 @@ public class DepartmentDAOImpl implements DepartmentDao {
     @Override
     public Optional<Department> getById(BigInteger id) {
         Optional<Department> dep = Optional.empty();
-        ResultSet resultSet = null;
         try (Connection connection = ConnectionSource.instance().createConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(GET_DEPARTMENT_BY_ID)) {
             preparedStatement.setString(PARAMETER_ONE, String.valueOf(id));
-            resultSet = preparedStatement.executeQuery();
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
 
-            while (resultSet.next()) {
-                dep = Optional.of(new Department(
-                    resultSet.getBigDecimal(COLUMN_ID).toBigInteger(),
-                    resultSet.getString(COLUMN_NAME),
-                    resultSet.getString(COLUMN_LOCATION)));
-            }
-        } catch (SQLException e) {
-            LOGGER.error(e);
-        } finally {
-            if (resultSet != null) {
-                try {
-                    resultSet.close();
-                } catch (SQLException e) {
-                    LOGGER.error(e);
+                if (resultSet.next()) {
+                    dep = Optional.of(new Department(
+                        resultSet.getBigDecimal(COLUMN_ID).toBigInteger(),
+                        resultSet.getString(COLUMN_NAME),
+                        resultSet.getString(COLUMN_LOCATION)));
                 }
             }
+        } catch (SQLException e) {
+            log.error(e);
         }
         return dep;
     }
@@ -71,7 +63,7 @@ public class DepartmentDAOImpl implements DepartmentDao {
                     resultSet.getString(COLUMN_LOCATION)));
             }
         } catch (SQLException e) {
-            LOGGER.error(e);
+            log.error(e);
         }
         return departmentList;
     }
@@ -79,13 +71,13 @@ public class DepartmentDAOImpl implements DepartmentDao {
     @Override
     public Department save(Department department) {
         BigInteger id;
-        if (!getById(department.getId()).equals(Optional.empty())) {
+        if (getById(department.getId()).isPresent()) {
             delete(department);
         }
         id = department.getId();
 
-        final String name = department.getName();
-        final String location = department.getLocation();
+        String name = department.getName();
+        String location = department.getLocation();
         try (Connection connection = ConnectionSource.instance().createConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(SAVE)) {
             preparedStatement.setInt(PARAMETER_ONE, Integer.parseInt(String.valueOf(id)));
@@ -93,7 +85,7 @@ public class DepartmentDAOImpl implements DepartmentDao {
             preparedStatement.setString(PARAMETER_THREE, location);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
-            LOGGER.error(e);
+            log.error(e);
         }
         return department;
     }
@@ -105,7 +97,7 @@ public class DepartmentDAOImpl implements DepartmentDao {
             preparedStatement.setString(PARAMETER_ONE, String.valueOf(department.getId()));
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
-            LOGGER.error(e);
+            log.error(e);
         }
     }
 }
